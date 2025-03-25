@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { checkSpelling } from '@/utils/spellcheck';
 import { cn } from '@/lib/utils';
 import { exportAsText, exportAsHTML } from '@/utils/documentUtils';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 const Editor = () => {
   const [text, setText] = useState('');
@@ -10,6 +10,7 @@ const Editor = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState('input');
   const [exportFormat, setExportFormat] = useState('text');
+  const { toast } = useToast();
 
   useEffect(() => {
     if (text) {
@@ -42,22 +43,36 @@ const Editor = () => {
       })
       .catch(err => {
         console.error('Failed to read clipboard:', err);
-        toast.error('Failed to read from clipboard');
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to read from clipboard"
+        });
       });
   };
 
   const handleExport = () => {
     if (!correctedText) {
-      toast.error('No text to export');
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No text to export"
+      });
       return;
     }
     
     if (exportFormat === 'html') {
       exportAsHTML(correctedText, 'corrected-document.html');
-      toast.success('Document exported as HTML');
+      toast({
+        title: "Success",
+        description: "Document exported as HTML"
+      });
     } else {
       exportAsText(correctedText, 'corrected-document.txt');
-      toast.success('Document exported as text');
+      toast({
+        title: "Success",
+        description: "Document exported as text"
+      });
     }
   };
 
