@@ -2,12 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import { checkSpelling } from '@/utils/spellcheck';
 import { cn } from '@/lib/utils';
+import { exportAsText, exportAsHTML } from '@/utils/documentUtils';
+import { toast } from '@/components/ui/sonner';
 
 const Editor = () => {
   const [text, setText] = useState('');
   const [correctedText, setCorrectedText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState('input');
+  const [exportFormat, setExportFormat] = useState('text');
 
   useEffect(() => {
     if (text) {
@@ -40,17 +43,23 @@ const Editor = () => {
       })
       .catch(err => {
         console.error('Failed to read clipboard:', err);
+        toast.error('Failed to read from clipboard');
       });
   };
 
   const handleExport = () => {
-    const element = document.createElement('a');
-    const file = new Blob([correctedText], {type: 'text/plain'});
-    element.href = URL.createObjectURL(file);
-    element.download = 'corrected-document.txt';
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+    if (!correctedText) {
+      toast.error('No text to export');
+      return;
+    }
+    
+    if (exportFormat === 'html') {
+      exportAsHTML(correctedText, 'corrected-document.html');
+      toast.success('Document exported as HTML');
+    } else {
+      exportAsText(correctedText, 'corrected-document.txt');
+      toast.success('Document exported as text');
+    }
   };
 
   return (
@@ -111,7 +120,8 @@ const Editor = () => {
                     value={text}
                     onChange={(e) => setText(e.target.value)}
                     placeholder="Type or paste your text here..."
-                    className="w-full h-64 p-4 rounded-xl border border-border bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    className="w-full h-64 p-4 rounded-xl border border-border bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary/50 whitespace-pre-wrap"
+                    style={{ whiteSpace: 'pre-wrap' }}
                   />
                   <div className="flex justify-end">
                     <button 
@@ -130,22 +140,36 @@ const Editor = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center flex-wrap gap-2">
                     <h3 className="text-lg font-medium">Corrected Text</h3>
-                    <button 
-                      onClick={handleExport}
-                      disabled={!correctedText}
-                      className={cn(
-                        "px-4 py-2 rounded-lg bg-secondary text-secondary-foreground transition-colors text-sm",
-                        correctedText ? "hover:bg-secondary/80" : "opacity-50 cursor-not-allowed"
-                      )}
-                    >
-                      Export Document
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={exportFormat}
+                        onChange={(e) => setExportFormat(e.target.value)}
+                        className="px-3 py-2 rounded-lg bg-background border border-border text-sm"
+                        disabled={!correctedText}
+                      >
+                        <option value="text">Plain Text (.txt)</option>
+                        <option value="html">Formatted HTML (.html)</option>
+                      </select>
+                      <button 
+                        onClick={handleExport}
+                        disabled={!correctedText}
+                        className={cn(
+                          "px-4 py-2 rounded-lg bg-secondary text-secondary-foreground transition-colors text-sm",
+                          correctedText ? "hover:bg-secondary/80" : "opacity-50 cursor-not-allowed"
+                        )}
+                      >
+                        Export Document
+                      </button>
+                    </div>
                   </div>
-                  <div className="w-full h-64 p-4 rounded-xl border border-border bg-background/50 overflow-auto">
+                  <div 
+                    className="w-full h-64 p-4 rounded-xl border border-border bg-background/50 overflow-auto"
+                    style={{ whiteSpace: 'pre-wrap' }}
+                  >
                     {correctedText ? (
-                      <p className="whitespace-pre-wrap">{correctedText}</p>
+                      <pre className="whitespace-pre-wrap font-sans">{correctedText}</pre>
                     ) : (
                       <div className="h-full flex items-center justify-center text-foreground/50">
                         {isProcessing ? 

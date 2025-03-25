@@ -12,6 +12,37 @@ export const exportAsText = (text: string, filename: string = 'document.txt'): v
   document.body.removeChild(element);
 };
 
+// Function to export text as HTML to preserve formatting
+export const exportAsHTML = (text: string, filename: string = 'document.html'): void => {
+  // Create a simple HTML wrapper to maintain whitespace formatting
+  const htmlContent = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Formatted Document</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+${text}
+</body>
+</html>`;
+
+  const element = document.createElement('a');
+  const file = new Blob([htmlContent], {type: 'text/html'});
+  element.href = URL.createObjectURL(file);
+  element.download = filename;
+  document.body.appendChild(element);
+  element.click();
+  document.body.removeChild(element);
+};
+
 // In a real implementation, these functions would handle more complex document operations
 // like parsing Word or PDF documents and preserving formatting
 
