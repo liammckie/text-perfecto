@@ -14,7 +14,9 @@ const Editor = () => {
     setText, 
     correctedText, 
     isProcessing, 
-    setIsProcessing 
+    setIsProcessing,
+    enableLineBreaks,
+    setEnableLineBreaks
   } = useTextProcessor();
   
   const {
@@ -67,6 +69,8 @@ const Editor = () => {
                     handleUploadClick={handleUploadClick}
                     fileInputRef={fileInputRef}
                     handleFileUpload={handleFileUpload}
+                    enableLineBreaks={enableLineBreaks}
+                    setEnableLineBreaks={setEnableLineBreaks}
                   />
                   <div className="flex justify-end mt-4">
                     <Button 

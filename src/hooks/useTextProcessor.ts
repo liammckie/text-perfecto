@@ -1,11 +1,13 @@
 
 import { useState, useEffect } from 'react';
 import { checkSpelling } from '@/utils/spellcheck';
+import { addLineBreaks, hasGoodParagraphStructure } from '@/utils/lineBreakUtils';
 
 export function useTextProcessor() {
   const [text, setText] = useState('');
   const [correctedText, setCorrectedText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [enableLineBreaks, setEnableLineBreaks] = useState(true);
 
   useEffect(() => {
     if (text) {
@@ -16,13 +18,19 @@ export function useTextProcessor() {
     } else {
       setCorrectedText('');
     }
-  }, [text]);
+  }, [text, enableLineBreaks]);
 
   const processText = async (inputText: string) => {
     setIsProcessing(true);
     try {
-      // In a real implementation, this would call an actual API
-      const result = await checkSpelling(inputText);
+      // First run spell check
+      let result = await checkSpelling(inputText);
+      
+      // Then add line breaks if enabled and needed
+      if (enableLineBreaks && !hasGoodParagraphStructure(result)) {
+        result = addLineBreaks(result);
+      }
+      
       setCorrectedText(result);
     } catch (error) {
       console.error('Error processing text:', error);
@@ -38,6 +46,8 @@ export function useTextProcessor() {
     setCorrectedText,
     isProcessing,
     setIsProcessing,
-    processText
+    processText,
+    enableLineBreaks,
+    setEnableLineBreaks
   };
 }

@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface TextInputProps {
   text: string;
@@ -9,6 +10,8 @@ interface TextInputProps {
   handleUploadClick: () => void;
   fileInputRef: React.RefObject<HTMLInputElement>;
   handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  enableLineBreaks?: boolean;
+  setEnableLineBreaks?: (enabled: boolean) => void;
 }
 
 const TextInput: React.FC<TextInputProps> = ({
@@ -17,7 +20,9 @@ const TextInput: React.FC<TextInputProps> = ({
   handlePaste,
   handleUploadClick,
   fileInputRef,
-  handleFileUpload
+  handleFileUpload,
+  enableLineBreaks = true,
+  setEnableLineBreaks
 }) => {
   return (
     <div className="space-y-4">
@@ -52,6 +57,22 @@ const TextInput: React.FC<TextInputProps> = ({
         className="w-full h-64 p-4 rounded-xl border border-border bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary/50 whitespace-pre-wrap"
         style={{ whiteSpace: 'pre-wrap' }}
       />
+      
+      {setEnableLineBreaks && (
+        <div className="flex items-center gap-2">
+          <Checkbox 
+            id="enable-line-breaks" 
+            checked={enableLineBreaks}
+            onCheckedChange={(checked) => setEnableLineBreaks(checked === true)}
+          />
+          <label 
+            htmlFor="enable-line-breaks" 
+            className="text-sm cursor-pointer"
+          >
+            Auto-format paragraphs and line breaks
+          </label>
+        </div>
+      )}
     </div>
   );
 };
