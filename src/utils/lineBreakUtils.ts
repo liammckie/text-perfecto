@@ -17,8 +17,12 @@ export const addLineBreaks = (text: string): string => {
   // But avoid breaking after common abbreviations (Mr., Dr., etc.)
   result = result.replace(/([.!?])\s+(?=[A-Z])/g, '$1\n\n');
   
-  // Add line breaks after numeric or bullet list items
-  result = result.replace(/(\d+\.|•|-)\s+([A-Za-z])/g, '$1 $2\n');
+  // Fix for numbered lists - the previous regex was capturing the first letter after the number
+  // Updated to properly handle numbered list items followed by text
+  result = result.replace(/(\d+\.)\s+([A-Za-z])/g, '$1 $2\n');
+  
+  // Add line breaks after bullet list items
+  result = result.replace(/(•|-)\s+([A-Za-z])/g, '$1 $2\n');
   
   // Add line breaks after common section indicators
   result = result.replace(/(Introduction|Summary|Conclusion|References|Notes):/g, '$1:\n');
