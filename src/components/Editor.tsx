@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { checkSpelling } from '@/utils/spellcheck';
 import { cn } from '@/lib/utils';
 import { exportAsText, exportAsHTML } from '@/utils/documentUtils';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/hooks/use-toast';
 
 const Editor = () => {
   const [text, setText] = useState('');
