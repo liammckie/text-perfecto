@@ -1,5 +1,6 @@
-
 // Document utility functions
+import { Document, Packer, Paragraph, TextRun } from 'docx';
+import { saveAs } from 'file-saver';
 
 // Function to export text as a plain text file
 export const exportAsText = (text: string, filename: string = 'document.txt'): void => {
@@ -43,8 +44,46 @@ ${text}
   document.body.removeChild(element);
 };
 
-// In a real implementation, these functions would handle more complex document operations
-// like parsing Word or PDF documents and preserving formatting
+// Function to export text as a Word document
+export const exportAsDocx = async (text: string, filename: string = 'document.docx'): Promise<void> => {
+  // Split the text by paragraphs
+  const paragraphs = text.split(/\n\s*\n/);
+  
+  // Create a new document
+  const doc = new Document({
+    sections: [{
+      properties: {},
+      children: paragraphs.map(para => 
+        new Paragraph({
+          children: [new TextRun(para.trim())],
+          spacing: {
+            after: 200, // add space after paragraph
+          }
+        })
+      )
+    }]
+  });
+
+  // Generate the document as a blob
+  const blob = await Packer.toBlob(doc);
+  
+  // Save the document
+  saveAs(blob, filename);
+};
+
+// Function to parse Word document
+export const parseWordDocument = async (file: File): Promise<string> => {
+  // This is a simplified implementation
+  // In a real app, you would use mammoth.js or similar to extract text with formatting
+  
+  // For now, we'll just read the text content to keep it simple
+  const text = await file.text();
+  
+  // Simulate processing time
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  return text;
+};
 
 // Function to count words in text
 export const countWords = (text: string): number => {

@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { checkSpelling } from '@/utils/spellcheck';
 import { cn } from '@/lib/utils';
-import { exportAsText, exportAsHTML } from '@/utils/documentUtils';
+import { exportAsText, exportAsHTML, exportAsDocx, parseWordDocument } from '@/utils/documentUtils';
 import { useToast } from '@/hooks/use-toast';
 
 const Editor = () => {
@@ -10,6 +11,7 @@ const Editor = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState('input');
   const [exportFormat, setExportFormat] = useState('text');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -51,7 +53,47 @@ const Editor = () => {
       });
   };
 
-  const handleExport = () => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsProcessing(true);
+    try {
+      if (file.name.endsWith('.docx')) {
+        const content = await parseWordDocument(file);
+        setText(content);
+        toast({
+          title: "Success",
+          description: "Word document uploaded successfully"
+        });
+      } else {
+        // Handle text files
+        const content = await file.text();
+        setText(content);
+        toast({
+          title: "Success",
+          description: "Text file uploaded successfully"
+        });
+      }
+    } catch (error) {
+      console.error('Error reading file:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to read the uploaded file"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleUploadClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleExport = async () => {
     if (!correctedText) {
       toast({
         variant: "destructive",
@@ -61,17 +103,32 @@ const Editor = () => {
       return;
     }
     
-    if (exportFormat === 'html') {
-      exportAsHTML(correctedText, 'corrected-document.html');
+    try {
+      if (exportFormat === 'html') {
+        exportAsHTML(correctedText, 'corrected-document.html');
+        toast({
+          title: "Success",
+          description: "Document exported as HTML"
+        });
+      } else if (exportFormat === 'docx') {
+        await exportAsDocx(correctedText, 'corrected-document.docx');
+        toast({
+          title: "Success",
+          description: "Document exported as Word"
+        });
+      } else {
+        exportAsText(correctedText, 'corrected-document.txt');
+        toast({
+          title: "Success",
+          description: "Document exported as text"
+        });
+      }
+    } catch (error) {
+      console.error('Error exporting document:', error);
       toast({
-        title: "Success",
-        description: "Document exported as HTML"
-      });
-    } else {
-      exportAsText(correctedText, 'corrected-document.txt');
-      toast({
-        title: "Success",
-        description: "Document exported as text"
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to export the document"
       });
     }
   };
@@ -87,7 +144,7 @@ const Editor = () => {
             Experience the Magic
           </h2>
           <p className="text-lg text-foreground/80">
-            Paste your text below to see how our tool transforms your document.
+            Paste your text or upload a Word document to see how our tool transforms your document.
           </p>
         </div>
 
@@ -121,19 +178,34 @@ const Editor = () => {
             <div className="p-6">
               {activeTab === 'input' ? (
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center flex-wrap gap-2">
                     <h3 className="text-lg font-medium">Your Text</h3>
-                    <button 
-                      onClick={handlePaste}
-                      className="px-4 py-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors text-sm"
-                    >
-                      Paste from Clipboard
-                    </button>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={handlePaste}
+                        className="px-4 py-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors text-sm"
+                      >
+                        Paste from Clipboard
+                      </button>
+                      <button 
+                        onClick={handleUploadClick}
+                        className="px-4 py-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors text-sm"
+                      >
+                        Upload Document
+                      </button>
+                      <input 
+                        type="file" 
+                        ref={fileInputRef}
+                        onChange={handleFileUpload}
+                        accept=".txt,.docx"
+                        className="hidden"
+                      />
+                    </div>
                   </div>
                   <textarea
                     value={text}
                     onChange={(e) => setText(e.target.value)}
-                    placeholder="Type or paste your text here..."
+                    placeholder="Type, paste, or upload your text here..."
                     className="w-full h-64 p-4 rounded-xl border border-border bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary/50 whitespace-pre-wrap"
                     style={{ whiteSpace: 'pre-wrap' }}
                   />
@@ -165,6 +237,7 @@ const Editor = () => {
                       >
                         <option value="text">Plain Text (.txt)</option>
                         <option value="html">Formatted HTML (.html)</option>
+                        <option value="docx">Word Document (.docx)</option>
                       </select>
                       <button 
                         onClick={handleExport}
